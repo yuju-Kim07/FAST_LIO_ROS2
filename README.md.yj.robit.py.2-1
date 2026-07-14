@@ -1,0 +1,88 @@
+### main.py
+
+import csv
+import json
+import numpy as np
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "students.csv")
+JSON_PATH = os.path.join(BASE_DIR, "summary.json")
+CLEAN_SCV_PATH = os.path.join(BASE_DIR, "clean_students.csv")
+
+def vaild_score(score): #스코어의 범위가 맞는지 확인하는 함수
+    return 0<=int(score)<=100
+
+clean_students=[] #알맞는 값만 넣기 위한 빈 리스트
+total_score=0 #초기화
+max_score=-1
+
+try:
+    with open(CSV_PATH, "r", newline="",
+          encoding="utf-8") as file:
+        reader=csv.reader(file) #함수 읽기
+        header= next(reader)
+
+        for row in reader:
+            name=row[0] #이름이 첫째열
+
+            score_1=row[1] #점수가 두번째열
+
+            try: 
+                
+                score_num=int(score_1)#스코어를 숫자로 바꾸기
+
+                if not vaild_score(score_1):#스코어가 숫자가 아닌 경우
+                    raise ValueError("점수 범위를 벗어났습니다. ")
+                
+                clean_students.append([name, score_num])#스코어가 숫자인 학생만 모아두기
+                total_score+=score_num
+
+                if score_num>max_score:
+                    max_score=score_num # 최고점 구하기
+
+            except ValueError:
+                print("점수에 이상이 있습니다. ")
+
+except FileNotFoundError:
+    print("students.csv가 없습니다. 다시 확인해주세요.")
+    exit()
+
+with open(CLEAN_SCV_PATH, "w", newline="",
+          encoding="utf-8") as file:
+    writer=csv.writer(file)
+
+    writer.writerow(["name", "score"])
+    writer.writerows(clean_students)#점수가 올바르게 입력된 학생들만 적기
+
+if clean_students:
+
+    score_only=[row[1] for row in clean_students] #점수만 따로 저장
+    average_valid=np.mean(score_only) #평균
+
+    total_data={ #최종 학생수, 평균, 최고점
+        "final_students_num":len(clean_students),
+        "average":round(float(average_valid), 2),
+        "max_score":max_score
+    }
+
+    with open(JSON_PATH, "w", encoding="utf-8") as file:
+        json.dump(total_data, file,
+                   ensure_ascii=False, indent=2)
+
+
+### clean_students.csv
+
+name,score
+민준,85
+서연,92
+유진,78
+
+
+### summary.json
+
+{
+  "final_students_num": 3,
+  "average": 85.0,
+  "max_score": 92
+}
